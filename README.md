@@ -1,6 +1,6 @@
-# ⭐ Estrela Criativa — Prof. Ataíse (Vite + React)
+# ⭐ Estrela Criativa — Prof. Ataíse (Vite + React + TypeScript)
 
-Catálogo online e área administrativa da **Estrela Criativa — Papelaria Personalizada & Pedagógica**, estruturado com **Vite + React** e **React Router**.
+Catálogo online e área administrativa da **Estrela Criativa — Papelaria Personalizada & Pedagógica**, estruturado com **Vite + React + TypeScript** e **React Router**.
 
 ## 🚀 Como Executar o Projeto
 
@@ -13,7 +13,10 @@ npm install
 # 2. Iniciar o servidor de desenvolvimento
 npm run dev
 
-# 3. Gerar build otimizado para produção (pasta dist/)
+# 3. Checar tipagens TypeScript
+npm run typecheck
+
+# 4. Gerar build otimizado para produção (pasta dist/)
 npm run build
 ```
 
@@ -26,53 +29,59 @@ npm run build
 ```text
 ├── public/                       # Imagens oficiais, logos e dados-loja.js
 ├── src/
-│   ├── components/               # Componentes reutilizáveis e interativos
+│   ├── types/
+│   │   └── store.ts              # Interfaces e tipagens TypeScript da loja e admin
+│   ├── components/               # Componentes reutilizáveis e interativos (.tsx)
 │   │   ├── admin/                # Componentes exclusivos da Área Admin
-│   │   │   ├── AdminLogin.jsx
-│   │   │   ├── AdminHeader.jsx
-│   │   │   ├── AdminStats.jsx
-│   │   │   ├── AdminProductForm.jsx
-│   │   │   ├── AdminProductList.jsx
-│   │   │   ├── AdminCategoryManager.jsx
-│   │   │   └── AdminSettings.jsx
+│   │   │   ├── AdminLogin.tsx
+│   │   │   ├── AdminHeader.tsx
+│   │   │   ├── AdminStats.tsx
+│   │   │   ├── AdminProductForm.tsx
+│   │   │   ├── AdminProductList.tsx
+│   │   │   ├── AdminCategoryManager.tsx
+│   │   │   └── AdminSettings.tsx
 │   │   ├── layout/               # Topo, Cabeçalho e Rodapé
-│   │   │   ├── Topbar.jsx
-│   │   │   ├── Header.jsx
-│   │   │   └── Footer.jsx
+│   │   │   ├── Topbar.tsx
+│   │   │   ├── Header.tsx
+│   │   │   └── Footer.tsx
 │   │   ├── store/                # Cards, Modal de Personalização, Sacola e Botão WhatsApp
-│   │   │   ├── ProductCard.jsx
-│   │   │   ├── CustomModal.jsx
-│   │   │   ├── CartDrawer.jsx
-│   │   │   └── FloatingWhatsApp.jsx
+│   │   │   ├── ProductCard.tsx
+│   │   │   ├── CustomModal.tsx
+│   │   │   ├── CartDrawer.tsx
+│   │   │   └── FloatingWhatsApp.tsx
 │   │   └── ui/                   # Feedback visual
-│   │       └── Toast.jsx
+│   │       └── Toast.tsx
 │   ├── sections/                 # Seções da página principal (Loja)
-│   │   ├── HeroSection.jsx
-│   │   ├── TrustBar.jsx
-│   │   ├── DepartmentsSection.jsx
-│   │   ├── CatalogSection.jsx
-│   │   ├── FinishesSection.jsx
-│   │   ├── StepsSection.jsx
-│   │   ├── TestimonialsSection.jsx
-│   │   └── FaqSection.jsx
+│   │   ├── HeroSection.tsx
+│   │   ├── TrustBar.tsx
+│   │   ├── DepartmentsSection.tsx
+│   │   ├── CatalogSection.tsx
+│   │   ├── FinishesSection.tsx
+│   │   ├── StepsSection.tsx
+│   │   ├── TestimonialsSection.tsx
+│   │   └── FaqSection.tsx
 │   ├── pages/                    # Páginas roteadas
-│   │   ├── StorePage.jsx         # Loja pública (rota "/")
-│   │   └── AdminPage.jsx         # Área Administrativa (rota "/admin")
+│   │   ├── StorePage.tsx         # Loja pública (rota "/")
+│   │   └── AdminPage.tsx         # Área Administrativa (rota "/admin")
 │   ├── context/
-│   │   └── StoreContext.jsx      # Estado global (produtos, categorias, carrinho, configs)
+│   │   └── StoreContext.tsx      # Estado global tipado (produtos, categorias, carrinho, configs)
 │   ├── data/
-│   │   └── defaultStoreData.js   # Catálogo inicial, categorias e textos das seções
+│   │   └── defaultStoreData.ts   # Catálogo inicial, categorias e textos das seções
 │   ├── utils/
-│   │   ├── formatters.js         # Formatação de moeda (R$), telefone e slugs
-│   │   └── imageUpload.js        # Redimensionamento automático de fotos via Canvas
+│   │   ├── formatters.ts         # Formatação de moeda (R$), telefone e slugs
+│   │   └── imageUpload.ts        # Redimensionamento automático de fotos via Canvas
 │   ├── styles/
 │   │   ├── global.css            # Variáveis e estilos da vitrine
 │   │   └── admin.css             # Estilos do painel administrativo
-│   ├── App.jsx                   # Definição de rotas
-│   └── main.jsx                  # Ponto de entrada React
+│   ├── App.tsx                   # Definição de rotas
+│   ├── main.tsx                  # Ponto de entrada React
+│   └── vite-env.d.ts             # Tipagens de ambiente Vite e Window
 ├── index.html
 ├── package.json
-└── vite.config.js
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+└── vite.config.ts
 ```
 
 ---
@@ -81,4 +90,3 @@ npm run build
 
 - **Rota:** `/admin` (ou clique em **🔒 Painel Administrativo** no rodapé da loja)
 - **Senha padrão inicial:** `estrela2026` *(pode ser alterada na aba Configurações do painel)*
-
