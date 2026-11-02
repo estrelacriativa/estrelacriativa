@@ -11,7 +11,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [senha, setSenha] = useState<string>('');
 
   const senhaCorreta = config.senhaAdmin || 'estrela2026';
-  const usandoSenhaPadrao = senhaCorreta === 'estrela2026';
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,11 +19,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       onLoginSuccess();
       mostrarNotificacao('🔓 Bem-vinda ao Painel Administrativo!');
     } else {
-      mostrarNotificacao(
-        usandoSenhaPadrao
-          ? '❌ Senha incorreta! Use a senha padrão: estrela2026'
-          : '❌ Senha incorreta! Tente novamente.'
-      );
+      mostrarNotificacao('❌ Senha incorreta! Tente novamente.');
     }
   };
 
@@ -59,18 +54,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               required
               autoFocus
             />
-            {usandoSenhaPadrao && (
-              <small
-                style={{
-                  display: 'block',
-                  marginTop: '6px',
-                  color: 'var(--lilac-dark)',
-                  fontWeight: 700,
-                }}
-              >
-                💡 Senha padrão inicial: <code>estrela2026</code>
-              </small>
-            )}
           </div>
 
           <button
