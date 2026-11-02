@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useStore } from '../../context/StoreContext';
 import type { AdminTab } from '../../types/store';
 
 interface AdminHeaderProps {
@@ -10,7 +11,9 @@ interface AdminHeaderProps {
 
 const ABAS_ADMIN: { id: AdminTab; label: string }[] = [
   { id: 'visao-geral', label: '📊 Visão Completa' },
+  { id: 'pedidos', label: '🛍️ Pedidos' },
   { id: 'produtos', label: '📦 Produtos' },
+  { id: 'bottons', label: '🎖️ Estúdio de Bottons' },
   { id: 'categorias', label: '🗂️ Categorias' },
   { id: 'configuracoes', label: '⚙️ Configurações & Backup' },
 ];
@@ -21,6 +24,8 @@ export default function AdminHeader({
   onNovoProduto,
   onLogout,
 }: AdminHeaderProps) {
+  const { pedidos } = useStore();
+  const qtdNovosPedidos = pedidos.filter((p) => p.status === 'novo').length;
   return (
     <header className="admin-header">
       <div className="container admin-header-content">
@@ -83,6 +88,11 @@ export default function AdminHeader({
                 onClick={() => onSelecionarAba(aba.id)}
               >
                 {aba.label}
+                {aba.id === 'pedidos' && qtdNovosPedidos > 0 && (
+                  <span className="admin-tab-count-badge">
+                    {qtdNovosPedidos}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -91,3 +101,4 @@ export default function AdminHeader({
     </header>
   );
 }
+

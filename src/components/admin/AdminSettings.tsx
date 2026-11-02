@@ -70,7 +70,7 @@ export default function AdminSettings() {
   const handleRestaurarCatalogo = () => {
     if (
       window.confirm(
-        'Deseja restaurar os 12 produtos originais de fábrica? Isso substituirá os produtos editados.'
+        'Deseja restaurar os 8 produtos oficiais da Estrela Criativa? Isso substituirá alterações nos produtos atuais.'
       )
     ) {
       restaurarProdutosPadrao();
@@ -242,7 +242,7 @@ export default function AdminSettings() {
             className="btn-outline-muted"
             onClick={handleRestaurarCatalogo}
           >
-            🔄 Restaurar 12 Produtos Originais
+            🔄 Restaurar Catálogo Oficial (8 Produtos)
           </button>
         </div>
       </form>

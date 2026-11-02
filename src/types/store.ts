@@ -41,6 +41,10 @@ export interface Product {
   tagPreview: string;
   destaque: string;
   permiteNome: boolean;
+  detalhesExtras?: string;
+  dimensoes?: string;
+  quantidadeFolhas?: string;
+  galeriaFotos?: string[];
 }
 
 export interface ProductFormInput {
@@ -55,12 +59,19 @@ export interface ProductFormInput {
   corFundo: string;
   destaque: string;
   tagPreview: string;
+  detalhesExtras: string;
+  dimensoes: string;
+  quantidadeFolhas: string;
+  galeriaFotos: string[];
 }
 
 export interface ProductCustomization {
   nomeCapa: string;
   tema: string;
   acabamento: string;
+  tamanhoBotton?: string;
+  arteBottonUrl?: string;
+  arteBottonPreview?: string;
 }
 
 export interface CartItem {
@@ -72,6 +83,17 @@ export interface CartItem {
   imagem: string;
   quantidade: number;
   personalizacao: ProductCustomization;
+
+  // Propriedades compatíveis para templates de mensagem e exportações
+  title?: string;
+  quantity?: number;
+  subtotal?: number;
+  customText?: string;
+  theme?: string;
+  themeDetails?: string;
+  lamination?: string;
+  type?: string;
+  bottonSize?: string;
 }
 
 export interface CustomerCheckoutData {
@@ -80,15 +102,54 @@ export interface CustomerCheckoutData {
   cep: string;
   pagamento: string;
   obs: string;
+  taxaEntrega?: number;
+}
+
+export type OrderStatus = 'novo' | 'em_producao' | 'concluido';
+
+export interface StoreOrder {
+  id: number;
+  clienteNome: string;
+  entrega: string;
+  cep: string;
+  pagamento: string;
+  observacoes: string;
+  subtotal: number;
+  descontoPix: number;
+  taxaEntrega?: number;
+  total: number;
+  status: OrderStatus;
+  itens: CartItem[];
+  criadoEm: string;
+}
+
+export interface StudioBottonPreset {
+  arteUrl: string;
+  tamanhoBotton?: string;
+  quantidade?: number;
+  clienteNome?: string;
 }
 
 export type SortOption = 'relevancia' | 'menor-preco' | 'maior-preco' | 'nome';
 
-export type AdminTab = 'visao-geral' | 'produtos' | 'categorias' | 'configuracoes';
+export type AdminTab =
+  | 'visao-geral'
+  | 'pedidos'
+  | 'produtos'
+  | 'bottons'
+  | 'categorias'
+  | 'configuracoes';
+
+export interface ToastAction {
+  texto: string;
+  onClick: () => void;
+  tipo?: 'primary' | 'secondary';
+}
 
 export interface ToastState {
   visivel: boolean;
   texto: string;
+  acoes?: ToastAction[];
 }
 
 export interface StoreBackupData {
@@ -130,3 +191,4 @@ export interface SelectOption {
   value: string;
   label: string;
 }
+

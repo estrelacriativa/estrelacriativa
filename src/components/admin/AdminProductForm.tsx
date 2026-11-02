@@ -12,7 +12,7 @@ import {
   OPCOES_CORES_FUNDO,
 } from '../../data/defaultStoreData';
 import { formatarMoeda } from '../../utils/formatters';
-import { redimensionarImagemUpload } from '../../utils/imageUpload';
+import { uploadImagemProdutoSupabase } from '../../utils/imageUpload';
 import type { Category, Product, ProductFormInput } from '../../types/store';
 
 interface AdminProductFormProps {
@@ -34,6 +34,10 @@ function criarEstadoInicial(categorias: Category[]): ProductFormInput {
     corFundo: OPCOES_CORES_FUNDO[0].value,
     destaque: 'Personalizável',
     tagPreview: 'Com seu nome na Capa',
+    detalhesExtras: '',
+    dimensoes: '',
+    quantidadeFolhas: '',
+    galeriaFotos: [],
   };
 }
 
@@ -46,7 +50,10 @@ export default function AdminProductForm({
   const [form, setForm] = useState<ProductFormInput>(() =>
     criarEstadoInicial(categorias)
   );
+  const [enviandoFoto, setEnviandoFoto] = useState<boolean>(false);
+  const [enviandoGaleria, setEnviandoGaleria] = useState<boolean>(false);
   const inputFileRef = useRef<HTMLInputElement>(null);
+  const inputGaleriaRef = useRef<HTMLInputElement>(null);
   const nomeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -63,6 +70,12 @@ export default function AdminProductForm({
         corFundo: produtoEditando.corFundo || OPCOES_CORES_FUNDO[0].value,
         destaque: produtoEditando.destaque || '',
         tagPreview: produtoEditando.tagPreview || '',
+        detalhesExtras: produtoEditando.detalhesExtras || '',
+        dimensoes: produtoEditando.dimensoes || '',
+        quantidadeFolhas: produtoEditando.quantidadeFolhas || '',
+        galeriaFotos: Array.isArray(produtoEditando.galeriaFotos)
+          ? produtoEditando.galeriaFotos
+          : [],
       });
     } else {
       setForm(criarEstadoInicial(categorias));
@@ -83,11 +96,58 @@ export default function AdminProductForm({
   const handleUploadImagem = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setEnviandoFoto(true);
     try {
-      const base64 = await redimensionarImagemUpload(file, 520, 0.82);
-      setForm((prev) => ({ ...prev, imagem: base64 }));
+      const resultado = await uploadImagemProdutoSupabase(file);
+      setForm((prev) => ({ ...prev, imagem: resultado.url }));
+      if (resultado.origem === 'supabase') {
+        mostrarNotificacao('☁️ Foto principal enviada para o Supabase Storage!');
+      } else {
+        mostrarNotificacao(
+          '⚠️ Bucket "produtos" ainda não criado no Supabase (foto salva em modo local).'
+        );
+      }
     } catch {
       mostrarNotificacao('❌ Erro ao processar imagem. Tente outro arquivo.');
+    } finally {
+      setEnviandoFoto(false);
+    }
+  };
+
+  const handleUploadGaleria = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setEnviandoGaleria(true);
+    try {
+      const arquivosLista = Array.from(files);
+      const resultados = await Promise.all(
+        arquivosLista.map((arquivo) => uploadImagemProdutoSupabase(arquivo))
+      );
+      const novasUrls = resultados.map((r) => r.url).filter(Boolean);
+
+      setForm((prev) => ({
+        ...prev,
+        galeriaFotos: [...prev.galeriaFotos, ...novasUrls],
+      }));
+
+      const usouSupabase = resultados.every((r) => r.origem === 'supabase');
+      if (usouSupabase) {
+        mostrarNotificacao(
+          `☁️ ${novasUrls.length} foto(s) extra(s) adicionada(s) à galeria!`
+        );
+      } else {
+        mostrarNotificacao(
+          `📸 ${novasUrls.length} foto(s) extra(s) carregada(s)!`
+        );
+      }
+    } catch {
+      mostrarNotificacao('❌ Erro ao enviar uma ou mais fotos da galeria.');
+    } finally {
+      setEnviandoGaleria(false);
+      if (inputGaleriaRef.current) {
+        inputGaleriaRef.current.value = '';
+      }
     }
   };
 
@@ -98,11 +158,17 @@ export default function AdminProductForm({
     }
   };
 
+  const handleRemoverFotoGaleria = (indice: number) => {
+    setForm((prev) => ({
+      ...prev,
+      galeriaFotos: prev.galeriaFotos.filter((_, idx) => idx !== indice),
+    }));
+  };
+
   const handleLimpar = () => {
     setForm(criarEstadoInicial(categorias));
-    if (inputFileRef.current) {
-      inputFileRef.current.value = '';
-    }
+    if (inputFileRef.current) inputFileRef.current.value = '';
+    if (inputGaleriaRef.current) inputGaleriaRef.current.value = '';
     onFinalizarEdicao();
     nomeInputRef.current?.focus();
   };
@@ -111,13 +177,13 @@ export default function AdminProductForm({
     e.preventDefault();
     salvarProduto(form);
     setForm(criarEstadoInicial(categorias));
-    if (inputFileRef.current) {
-      inputFileRef.current.value = '';
-    }
+    if (inputFileRef.current) inputFileRef.current.value = '';
+    if (inputGaleriaRef.current) inputGaleriaRef.current.value = '';
     onFinalizarEdicao();
   };
 
   const estaEditando = Boolean(form.id);
+  const ocupandoUpload = enviandoFoto || enviandoGaleria;
 
   return (
     <div className="admin-panel-card" ref={formCardRef}>
@@ -208,25 +274,34 @@ export default function AdminProductForm({
         </div>
 
         <div className="form-group">
-          <label htmlFor="prodDescricao">Descrição dos Detalhes *</label>
+          <label htmlFor="prodDescricao">Resumo Curto (exibido no card) *</label>
           <textarea
             id="prodDescricao"
             className="form-control"
-            rows={3}
+            rows={2}
             value={form.descricao}
             onChange={(e) => handleChange('descricao', e.target.value)}
-            placeholder="Descreva os itens inclusos, gramatura das folhas, tamanho, etc."
+            placeholder="Resumo rápido exibido no card da vitrine."
             required
           />
         </div>
 
-        {/* Upload de Foto Real do Produto */}
+        {/* Upload de Foto Principal do Produto */}
         <div className="form-group">
           <label>
-            📸 Foto do Produto (Opcional — se não enviar, usa o ícone abaixo)
+            📸 Foto Principal da Capa (Opcional — se não enviar, usa o ícone abaixo)
           </label>
-          <label htmlFor="prodImagemInput" className="image-upload-box">
-            <span style={{ fontSize: '1.5rem', display: 'block' }}>📤</span>
+          <label
+            htmlFor="prodImagemInput"
+            className="image-upload-box"
+            style={{
+              opacity: enviandoFoto ? 0.65 : 1,
+              pointerEvents: enviandoFoto ? 'none' : 'auto',
+            }}
+          >
+            <span style={{ fontSize: '1.5rem', display: 'block' }}>
+              {enviandoFoto ? '⏳' : '📤'}
+            </span>
             <span
               style={{
                 fontSize: '0.85rem',
@@ -234,7 +309,9 @@ export default function AdminProductForm({
                 color: 'var(--rose-primary)',
               }}
             >
-              Clique aqui para escolher uma foto do seu computador
+              {enviandoFoto
+                ? 'Enviando foto para o Supabase Storage...'
+                : 'Clique aqui para escolher a foto principal'}
             </span>
             <span
               style={{
@@ -243,7 +320,7 @@ export default function AdminProductForm({
                 display: 'block',
               }}
             >
-              JPG, PNG ou WebP (redimensionamento automático)
+              JPG, PNG ou WebP (otimização e envio automático para a nuvem)
             </span>
           </label>
           <input
@@ -251,13 +328,14 @@ export default function AdminProductForm({
             type="file"
             id="prodImagemInput"
             accept="image/*"
+            disabled={enviandoFoto}
             style={{ display: 'none' }}
             onChange={handleUploadImagem}
           />
 
           {form.imagem && (
             <div className="image-preview-wrapper">
-              <img src={form.imagem} alt="Prévia da foto" />
+              <img src={form.imagem} alt="Prévia da foto principal" />
               <button
                 type="button"
                 className="btn-remove-img"
@@ -267,6 +345,127 @@ export default function AdminProductForm({
               </button>
             </div>
           )}
+        </div>
+
+        {/* ==============================================================
+            BLOCO NOVO: MAIS INFORMAÇÕES, FICHA TÉCNICA E GALERIA DE FOTOS
+           ============================================================== */}
+        <div className="admin-extra-details-box">
+          <div className="admin-extra-details-title">
+            🔍 Botão &quot;Mais Informações&quot; (Opcional)
+          </div>
+          <p className="admin-extra-details-hint">
+            Preencha apenas o que fizer sentido para este item (fotos do miolo,
+            dimensões, número de folhas, itens inclusos, etc.).
+          </p>
+
+          <div className="form-row-2">
+            <div className="form-group">
+              <label htmlFor="prodDimensoes">📏 Dimensões / Tamanho</label>
+              <input
+                type="text"
+                id="prodDimensoes"
+                className="form-control"
+                value={form.dimensoes}
+                onChange={(e) => handleChange('dimensoes', e.target.value)}
+                placeholder="Ex: 15,5 x 21,5 cm (A5)"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="prodQtdFolhas">📄 Quantidade de Folhas</label>
+              <input
+                type="text"
+                id="prodQtdFolhas"
+                className="form-control"
+                value={form.quantidadeFolhas}
+                onChange={(e) =>
+                  handleChange('quantidadeFolhas', e.target.value)
+                }
+                placeholder="Ex: 100 folhas (papel 90g)"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="prodDetalhesExtras">
+              📋 Mais Detalhes / Descrição Completa
+            </label>
+            <textarea
+              id="prodDetalhesExtras"
+              className="form-control"
+              rows={4}
+              value={form.detalhesExtras}
+              onChange={(e) => handleChange('detalhesExtras', e.target.value)}
+              placeholder="Ex: Acompanha bolso canguru plástico, cartela de adesivos, divisórias mensais plastificadas, elástico combinando..."
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>
+              🖼️ Fotos Extras da Galeria (Miolo, Verso, Detalhes — pode selecionar várias)
+            </label>
+            <label
+              htmlFor="prodGaleriaInput"
+              className="image-upload-box gallery-upload-box"
+              style={{
+                opacity: enviandoGaleria ? 0.65 : 1,
+                pointerEvents: enviandoGaleria ? 'none' : 'auto',
+              }}
+            >
+              <span style={{ fontSize: '1.35rem', display: 'block' }}>
+                {enviandoGaleria ? '⏳' : '🖼️'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.83rem',
+                  fontWeight: 800,
+                  color: 'var(--lilac-dark)',
+                }}
+              >
+                {enviandoGaleria
+                  ? 'Enviando fotos extras para a nuvem...'
+                  : '+ Adicionar fotos extras do produto'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-muted)',
+                  display: 'block',
+                }}
+              >
+                Selecione 1 ou várias fotos de uma vez
+              </span>
+            </label>
+            <input
+              ref={inputGaleriaRef}
+              type="file"
+              id="prodGaleriaInput"
+              accept="image/*"
+              multiple
+              disabled={enviandoGaleria}
+              style={{ display: 'none' }}
+              onChange={handleUploadGaleria}
+            />
+
+            {form.galeriaFotos.length > 0 && (
+              <div className="admin-gallery-grid">
+                {form.galeriaFotos.map((url, idx) => (
+                  <div key={`${url}-${idx}`} className="admin-gallery-item">
+                    <img src={url} alt={`Foto extra ${idx + 1}`} />
+                    <button
+                      type="button"
+                      className="admin-gallery-remove"
+                      onClick={() => handleRemoverFotoGaleria(idx)}
+                      title="Remover esta foto"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="form-row-2">
@@ -332,9 +531,19 @@ export default function AdminProductForm({
         <button
           type="submit"
           className="btn-primary"
-          style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+          disabled={ocupandoUpload}
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            marginTop: '8px',
+            opacity: ocupandoUpload ? 0.65 : 1,
+          }}
         >
-          {estaEditando ? '💾 Salvar Alterações' : '💾 Salvar Produto no Catálogo'}
+          {ocupandoUpload
+            ? '⏳ Aguarde o envio das fotos...'
+            : estaEditando
+            ? '💾 Salvar Alterações'
+            : '💾 Salvar Produto no Catálogo'}
         </button>
       </form>
     </div>

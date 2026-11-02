@@ -15,20 +15,17 @@ export default function HeroSection() {
               <span className="hero-badge">
                 💜 Papelaria Personalizada &amp; Criativa • Prof. Ataíse
               </span>
-              <h1 className="hero-title">
+              <h1 className="hero-title text-2xl sm:text-3xl font-extrabold leading-tight text-center">
                 Transformamos papel em{' '}
                 <span className="highlight-purple">encanto</span> e{' '}
                 <span className="highlight-aqua">criatividade</span> com o seu
                 nome!
               </h1>
-              <p className="hero-description">
-                Planners pedagógicos, agendas, cadernos personalizados, kits de
-                festa em 3D, etiquetas escolares à prova d&apos;água e brindes
-                corporativos. Escolha seus itens no catálogo e envie seu pedido
-                direto para o nosso WhatsApp!
+              <p className="hero-description text-center">
+                Agendas A5 holográficas, blocos, cadernos, etiquetas escolares, lembrancinhas e cadernetas de vacinação feitos com amor!
               </p>
-              <div className="hero-buttons">
-                <a href="#catalogo" className="btn-primary">
+              <div className="hero-buttons flex flex-col w-full gap-3 sm:flex-row">
+                <a href="#catalogo" className="btn-primary w-full justify-center py-3.5 sm:w-auto">
                   <span>🛍️ Ver Catálogo Completo</span>
                 </a>
                 <a
@@ -37,9 +34,9 @@ export default function HeroSection() {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-secondary"
+                  className="btn-secondary w-full justify-center py-3.5 sm:w-auto"
                 >
-                  <span>💬 Falar no WhatsApp {config.whatsappExibicao}</span>
+                  <span>💬 Falar no WhatsApp</span>
                 </a>
               </div>
             </div>
@@ -87,3 +84,4 @@ export default function HeroSection() {
     </section>
   );
 }
+

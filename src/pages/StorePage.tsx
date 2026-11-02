@@ -3,7 +3,9 @@ import Topbar from '../components/layout/Topbar';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import CustomModal from '../components/store/CustomModal';
+import ProductDetailsModal from '../components/store/ProductDetailsModal';
 import CartDrawer from '../components/store/CartDrawer';
+import MobileCartBar from '../components/store/MobileCartBar';
 import FloatingWhatsApp from '../components/store/FloatingWhatsApp';
 
 import HeroSection from '../sections/HeroSection';
@@ -37,9 +39,12 @@ export default function StorePage() {
 
       <Footer />
 
+      <ProductDetailsModal />
       <CustomModal />
       <CartDrawer />
+      <MobileCartBar />
       <FloatingWhatsApp />
     </div>
   );
 }
+

@@ -6,7 +6,9 @@ import AdminProductForm from '../components/admin/AdminProductForm';
 import AdminProductList from '../components/admin/AdminProductList';
 import AdminCategoryManager from '../components/admin/AdminCategoryManager';
 import AdminSettings from '../components/admin/AdminSettings';
-import type { AdminTab, Product } from '../types/store';
+import AdminBottonStudio from '../components/admin/AdminBottonStudio';
+import AdminOrders from '../components/admin/AdminOrders';
+import type { AdminTab, Product, StudioBottonPreset } from '../types/store';
 
 export default function AdminPage() {
   const [logado, setLogado] = useState<boolean>(
@@ -15,6 +17,8 @@ export default function AdminPage() {
   const [abaAtiva, setAbaAtiva] = useState<AdminTab>('visao-geral');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos');
   const [produtoEditando, setProdutoEditando] = useState<Product | null>(null);
+  const [presetEstudioBotton, setPresetEstudioBotton] =
+    useState<StudioBottonPreset | null>(null);
   const formCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +53,12 @@ export default function AdminPage() {
 
   const handleFiltrarPorCardStats = (catId: string) => {
     setFiltroCategoria(catId);
-    if (abaAtiva === 'categorias' || abaAtiva === 'configuracoes') {
+    if (
+      abaAtiva === 'categorias' ||
+      abaAtiva === 'configuracoes' ||
+      abaAtiva === 'bottons' ||
+      abaAtiva === 'pedidos'
+    ) {
       setAbaAtiva('produtos');
     }
   };
@@ -119,6 +128,23 @@ export default function AdminPage() {
               onEditarProduto={handleEditarProduto}
             />
           </div>
+        )}
+
+        {abaAtiva === 'pedidos' && (
+          <AdminOrders
+            onAbrirNoEstudioBotton={(preset) => {
+              setPresetEstudioBotton(preset);
+              setAbaAtiva('bottons');
+            }}
+          />
+        )}
+
+        {abaAtiva === 'bottons' && (
+          <AdminBottonStudio
+            presetPedido={presetEstudioBotton}
+            onLimparPreset={() => setPresetEstudioBotton(null)}
+            onIrParaPedidos={() => setAbaAtiva('pedidos')}
+          />
         )}
 
         {abaAtiva === 'categorias' && (

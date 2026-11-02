@@ -84,7 +84,7 @@ export default function CatalogSection() {
           </div>
         </div>
 
-        <div className="products-grid">
+        <div className="products-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {produtosFiltrados.length === 0 ? (
             <div className="catalog-empty-state">
               <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔍</div>
@@ -121,3 +121,4 @@ export default function CatalogSection() {
     </main>
   );
 }
+

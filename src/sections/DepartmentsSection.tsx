@@ -12,7 +12,7 @@ export default function DepartmentsSection() {
           <h2 className="section-title">Escolha a Categoria Desejada</h2>
         </div>
 
-        <div className="departments-grid">
+        <div className="departments-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div
             role="button"
             tabIndex={0}
@@ -67,3 +67,4 @@ export default function DepartmentsSection() {
     </section>
   );
 }
+

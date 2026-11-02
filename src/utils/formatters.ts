@@ -37,3 +37,4 @@ export function gerarIdCategoria(nome: string): string {
     Date.now().toString().slice(-3)
   );
 }
+
