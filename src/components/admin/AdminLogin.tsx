@@ -12,7 +12,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [email, setEmail] = useState<string>('');
   const [senha, setSenha] = useState<string>('');
   const [carregando, setCarregando] = useState<boolean>(false);
-  const [modoCadastro, setModoCadastro] = useState<boolean>(false);
   const [mensagemErro, setMensagemErro] = useState<string>('');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -21,57 +20,27 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     setCarregando(true);
 
     try {
-      if (modoCadastro) {
-        if (senha.length < 6) {
-          setMensagemErro('A senha deve conter pelo menos 6 caracteres.');
-          setCarregando(false);
-          return;
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
 
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: senha,
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (data.session) {
-          sessionStorage.setItem('estrelaAdminLogado', 'sim');
-          mostrarNotificacao('✨ Administrador cadastrado com sucesso!');
-          onLoginSuccess();
+      if (error) {
+        if (
+          error.message.includes('Invalid login credentials') ||
+          error.message.includes('invalid_grant')
+        ) {
+          setMensagemErro('E-mail ou senha incorretos. Verifique seus dados.');
         } else {
-          mostrarNotificacao(
-            '✅ Cadastro criado! Verifique a confirmação no seu e-mail ou faça login.'
-          );
-          setModoCadastro(false);
+          setMensagemErro(error.message);
         }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: senha,
-        });
+        return;
+      }
 
-        if (error) {
-          if (
-            error.message.includes('Invalid login credentials') ||
-            error.message.includes('invalid_grant')
-          ) {
-            setMensagemErro(
-              'E-mail ou senha incorretos. Se ainda não criou sua conta de administrador, clique em "Primeiro Acesso" abaixo.'
-            );
-          } else {
-            setMensagemErro(error.message);
-          }
-          return;
-        }
-
-        if (data.session) {
-          sessionStorage.setItem('estrelaAdminLogado', 'sim');
-          mostrarNotificacao('🔓 Bem-vinda ao Painel Administrativo!');
-          onLoginSuccess();
-        }
+      if (data.session) {
+        sessionStorage.setItem('estrelaAdminLogado', 'sim');
+        mostrarNotificacao('🔓 Bem-vinda ao Painel da Estrela Criativa!');
+        onLoginSuccess();
       }
     } catch (err: unknown) {
       const errObj = err as { message?: string };
@@ -97,9 +66,8 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             marginBottom: '18px',
           }}
         >
-          {modoCadastro
-            ? 'Crie seu acesso inicial seguro como Administradora.'
-            : 'Gerencie produtos, pedidos, fotos e configurações da Estrela Criativa.'}
+          Gerencie produtos, pedidos, fotos e configurações da{' '}
+          <strong>Estrela Criativa</strong>.
         </p>
 
         {mensagemErro && (
@@ -168,70 +136,14 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           >
             {carregando
               ? '⏳ Autenticando com segurança...'
-              : modoCadastro
-              ? '✨ Criar Administrador Seguro'
               : '🔓 Entrar no Painel Administrativo'}
           </button>
         </form>
 
         <div
           style={{
-            marginTop: '16px',
-            fontSize: '0.85rem',
-            color: 'var(--text-muted)',
-          }}
-        >
-          {modoCadastro ? (
-            <p>
-              Já possui uma conta?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setModoCadastro(false);
-                  setMensagemErro('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--purple-primary)',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  padding: 0,
-                }}
-              >
-                Faça Login aqui
-              </button>
-            </p>
-          ) : (
-            <p>
-              Primeiro acesso ao novo sistema blindado?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setModoCadastro(true);
-                  setMensagemErro('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--purple-primary)',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  padding: 0,
-                }}
-              >
-                Criar Acesso de Administrador
-              </button>
-            </p>
-          )}
-        </div>
-
-        <div
-          style={{
-            marginTop: '18px',
-            paddingTop: '14px',
+            marginTop: '22px',
+            paddingTop: '16px',
             borderTop: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',

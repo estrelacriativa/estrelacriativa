@@ -160,3 +160,4 @@ CREATE POLICY "Storage: Exclusão de fotos por admin"
 
 -- 9. NOTIFICAÇÃO DE RECARGA DO SCHEMA POSTGREST
 NOTIFY pgrst, 'reload schema';
+
