@@ -7,9 +7,11 @@ interface AdminLoginProps {
   onLoginSuccess: () => void;
 }
 
+const ADMIN_EMAIL_OFICIAL = 'ataiseevangelista@gmail.com';
+
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const { mostrarNotificacao } = useStore();
-  const [email, setEmail] = useState<string>('');
+  const [email, setEmail] = useState<string>(ADMIN_EMAIL_OFICIAL);
   const [senha, setSenha] = useState<string>('');
   const [carregando, setCarregando] = useState<boolean>(false);
   const [mensagemErro, setMensagemErro] = useState<string>('');
@@ -17,6 +19,12 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensagemErro('');
+
+    if (email.trim().toLowerCase() !== ADMIN_EMAIL_OFICIAL) {
+      setMensagemErro('Acesso restrito: este e-mail não possui privilégios de administradora.');
+      return;
+    }
+
     setCarregando(true);
 
     try {

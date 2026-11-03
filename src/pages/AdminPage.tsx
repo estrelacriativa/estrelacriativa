@@ -21,22 +21,36 @@ export default function AdminPage() {
     useState<StudioBottonPreset | null>(null);
   const formCardRef = useRef<HTMLDivElement>(null);
 
+  const ADMIN_EMAIL_OFICIAL = 'ataiseevangelista@gmail.com';
+
   useEffect(() => {
     document.title =
       'Painel Administrativo | Estrela Criativa — Prof. Ataíse';
 
+    const validarSessaoAdmin = (session: unknown) => {
+      const sess = session as { user?: { email?: string } } | null;
+      const email = sess?.user?.email?.toLowerCase().trim();
+      if (sess && email === ADMIN_EMAIL_OFICIAL) {
+        setLogado(true);
+      } else {
+        if (sess && email && email !== ADMIN_EMAIL_OFICIAL) {
+          supabase.auth.signOut().catch(() => {});
+        }
+        setLogado(false);
+      }
+      setCarregandoSessao(false);
+    };
+
     // 1. Verifica se já existe sessão ativa e válida no Supabase Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setLogado(!!session);
-      setCarregandoSessao(false);
+      validarSessaoAdmin(session);
     });
 
     // 2. Escuta mudanças na autenticação (login, logout, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLogado(!!session);
-      setCarregandoSessao(false);
+      validarSessaoAdmin(session);
     });
 
     return () => {
