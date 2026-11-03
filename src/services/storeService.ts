@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type {
   Category,
   Product,
@@ -98,6 +98,15 @@ export function formatarConfigParaApp(conf: DbStoreConfig): StoreConfig {
 // ==============================================================================
 
 export async function carregarDadosSupabase() {
+  if (!isSupabaseConfigured) {
+    return {
+      categorias: null,
+      produtos: null,
+      config: null,
+      erros: {},
+    };
+  }
+
   const [catRes, prodRes, confRes] = await Promise.all([
     supabase.from('categorias').select('*').order('ordem', { ascending: true }),
     supabase.from('produtos').select('*').order('id', { ascending: true }),
@@ -374,6 +383,10 @@ export function formatarPedidoParaApp(ped: DbStoreOrder): StoreOrder {
 }
 
 export async function carregarPedidosSupabase(): Promise<StoreOrder[] | null> {
+  if (!isSupabaseConfigured) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('pedidos')
     .select('*')

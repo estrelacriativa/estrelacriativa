@@ -1,13 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
-if (!supabaseUrl || !supabaseAnonKey) {
+export const isSupabaseConfigured = Boolean(
+  rawUrl && rawKey && rawKey !== 'seu_supabase_anon_key_aqui'
+);
+
+if (!isSupabaseConfigured) {
   console.warn(
-    '⚠️ Supabase URL ou Anon Key ausente! Verifique o arquivo .env com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.'
+    '⚠️ Supabase URL ou Anon Key ausente/incompleto no arquivo .env! A loja funcionará com dados padrão e armazenamento local.'
   );
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+// Fallback seguro para evitar que a aplicação quebre com tela branca caso a chave ainda não tenha sido preenchida
+const supabaseUrl = rawUrl || 'https://alaavpbttwxuzchjgite.supabase.co';
+const supabaseAnonKey = rawKey || 'placeholder-anon-key-prevent-crash';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
