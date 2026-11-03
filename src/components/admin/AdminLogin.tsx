@@ -46,7 +46,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       }
 
       if (data.session) {
-        sessionStorage.setItem('estrelaAdminLogado', 'sim');
         mostrarNotificacao('🔓 Bem-vinda ao Painel da Estrela Criativa!');
         onLoginSuccess();
       }

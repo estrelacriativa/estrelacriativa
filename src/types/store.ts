@@ -8,7 +8,6 @@ export interface StoreConfig {
   instagram: string;
   descontoPix: number;
   avisoTopo: string;
-  senhaAdmin?: string;
 }
 
 export interface Category {

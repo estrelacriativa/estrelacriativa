@@ -64,7 +64,6 @@ export default function AdminPage() {
     } catch {
       // continua limpeza local
     }
-    sessionStorage.removeItem('estrelaAdminLogado');
     setLogado(false);
   };
 

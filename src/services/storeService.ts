@@ -49,7 +49,6 @@ export interface DbStoreConfig {
   instagram: string;
   desconto_pix: number;
   aviso_topo: string;
-  senha_admin?: string;
 }
 
 export function formatarCategoriaParaApp(cat: DbCategory): Category {

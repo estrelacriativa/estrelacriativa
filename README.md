@@ -89,4 +89,4 @@ npm run build
 ## 🔒 Acesso à Área Administrativa
 
 - **Rota:** `/admin` (ou clique em **🔒 Painel Administrativo** no rodapé da loja)
-- **Senha padrão inicial:** `estrela2026` *(pode ser alterada na aba Configurações do painel)*
+- **Autenticação:** Protegida com **Supabase Auth** e criptografia ponta a ponta (acesso restrito à administradora).
