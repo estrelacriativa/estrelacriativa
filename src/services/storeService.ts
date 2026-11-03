@@ -49,7 +49,7 @@ export interface DbStoreConfig {
   instagram: string;
   desconto_pix: number;
   aviso_topo: string;
-  senha_admin: string;
+  senha_admin?: string;
 }
 
 export function formatarCategoriaParaApp(cat: DbCategory): Category {
@@ -91,7 +91,6 @@ export function formatarConfigParaApp(conf: DbStoreConfig): StoreConfig {
     instagram: conf.instagram,
     descontoPix: conf.desconto_pix,
     avisoTopo: conf.aviso_topo,
-    senhaAdmin: conf.senha_admin,
   };
 }
 
@@ -216,7 +215,6 @@ export async function salvarConfigSupabase(parcialConfig: Partial<StoreConfig>) 
   if (parcialConfig.instagram !== undefined) payload.instagram = parcialConfig.instagram;
   if (parcialConfig.descontoPix !== undefined) payload.desconto_pix = parcialConfig.descontoPix;
   if (parcialConfig.avisoTopo !== undefined) payload.aviso_topo = parcialConfig.avisoTopo;
-  if (parcialConfig.senhaAdmin !== undefined) payload.senha_admin = parcialConfig.senhaAdmin;
 
   const { data, error } = await supabase
     .from('loja_config')

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 import AdminLogin from '../components/admin/AdminLogin';
 import AdminHeader from '../components/admin/AdminHeader';
 import AdminStats from '../components/admin/AdminStats';
@@ -11,9 +12,8 @@ import AdminOrders from '../components/admin/AdminOrders';
 import type { AdminTab, Product, StudioBottonPreset } from '../types/store';
 
 export default function AdminPage() {
-  const [logado, setLogado] = useState<boolean>(
-    () => sessionStorage.getItem('estrelaAdminLogado') === 'sim'
-  );
+  const [logado, setLogado] = useState<boolean>(false);
+  const [carregandoSessao, setCarregandoSessao] = useState<boolean>(true);
   const [abaAtiva, setAbaAtiva] = useState<AdminTab>('visao-geral');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos');
   const [produtoEditando, setProdutoEditando] = useState<Product | null>(null);
@@ -24,9 +24,32 @@ export default function AdminPage() {
   useEffect(() => {
     document.title =
       'Painel Administrativo | Estrela Criativa — Prof. Ataíse';
+
+    // 1. Verifica se já existe sessão ativa e válida no Supabase Auth
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLogado(!!session);
+      setCarregandoSessao(false);
+    });
+
+    // 2. Escuta mudanças na autenticação (login, logout, token refresh)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLogado(!!session);
+      setCarregandoSessao(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // continua limpeza local
+    }
     sessionStorage.removeItem('estrelaAdminLogado');
     setLogado(false);
   };
@@ -62,6 +85,37 @@ export default function AdminPage() {
       setAbaAtiva('produtos');
     }
   };
+
+  if (carregandoSessao) {
+    return (
+      <div
+        className="admin-page-bg"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '80vh',
+        }}
+      >
+        <div style={{ textAlign: 'center', color: 'var(--lilac-dark)' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              border: '4px solid var(--lilac-light)',
+              borderTopColor: 'var(--lilac-primary)',
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <p style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+            🔒 Verificando sessão segura...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!logado) {
     return (

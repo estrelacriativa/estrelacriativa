@@ -33,6 +33,7 @@ import {
   gerarIdCategoria,
 } from '../utils/formatters';
 import { generateWhatsAppMessage } from '../utils/whatsapp';
+import { supabase } from '../lib/supabase';
 import { excluirImagemProdutoSupabase } from '../utils/imageUpload';
 import type {
   StoreConfig,
@@ -515,23 +516,49 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         console.warn('Conexão Supabase em espera ou tabelas ainda não criadas:', err);
       });
 
-    carregarPedidosSupabase()
-      .then((listaPedidos) => {
-        if (!montado || !listaPedidos) return;
-        setPedidos(listaPedidos);
+    // Proteção LGPD: Sincroniza pedidos da nuvem apenas se houver sessão de administrador autenticado
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && montado) {
+        carregarPedidosSupabase()
+          .then((listaPedidos) => {
+            if (!montado || !listaPedidos) return;
+            setPedidos(listaPedidos);
+            try {
+              localStorage.setItem(
+                STORAGE_KEYS.PEDIDOS,
+                JSON.stringify(listaPedidos)
+              );
+            } catch {
+              // ignora erro quota
+            }
+          })
+          .catch(() => {});
+      }
+    });
+
+    const {
+      data: { subscription: authSub },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session && montado) {
+        carregarPedidosSupabase()
+          .then((listaPedidos) => {
+            if (!montado || !listaPedidos) return;
+            setPedidos(listaPedidos);
+          })
+          .catch(() => {});
+      } else if (!session && montado) {
+        setPedidos([]);
         try {
-          localStorage.setItem(
-            STORAGE_KEYS.PEDIDOS,
-            JSON.stringify(listaPedidos)
-          );
+          localStorage.removeItem(STORAGE_KEYS.PEDIDOS);
         } catch {
-          // ignora erro quota
+          // ignora
         }
-      })
-      .catch(() => { });
+      }
+    });
 
     return () => {
       montado = false;
+      authSub.unsubscribe();
     };
   }, []);
 
@@ -1019,10 +1046,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             instagram: instagramLimpo,
             descontoPix,
             avisoTopo: parcialConfig.avisoTopo?.trim() || CONFIG_PADRAO.avisoTopo,
-            senhaAdmin:
-              parcialConfig.senhaAdmin?.trim() ||
-              config.senhaAdmin ||
-              CONFIG_PADRAO.senhaAdmin,
           };
 
           localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(novaConfig));
@@ -1037,7 +1060,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       const exportarDadosLojaJs = useCallback(() => {
         const configPublica: Partial<StoreConfig> = { ...config };
-        delete configPublica.senhaAdmin;
 
         const conteudo =
           '// Dados exportados pelo Painel Administrativo da Estrela Criativa\n' +

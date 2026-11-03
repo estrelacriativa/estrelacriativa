@@ -50,43 +50,73 @@ CREATE TABLE IF NOT EXISTS public.loja_config (
     instagram TEXT NOT NULL DEFAULT 'estrelacriativa__',
     desconto_pix INT NOT NULL DEFAULT 5,
     aviso_topo TEXT NOT NULL DEFAULT '⭐ Estrela Criativa • Prof. Ataíse',
-    senha_admin TEXT NOT NULL DEFAULT 'estrela2026',
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ==============================================================================
--- ROW LEVEL SECURITY (RLS) - SEGURANÇA
+-- ROW LEVEL SECURITY (RLS) - SEGURANÇA BLINDADA
 -- ==============================================================================
 ALTER TABLE public.categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.produtos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.loja_config ENABLE ROW LEVEL SECURITY;
 
--- Permite leitura de catálogo para qualquer visitante
-CREATE POLICY "Permitir leitura pública de categorias"
+-- Permite leitura de catálogo para qualquer visitante (público)
+CREATE POLICY "Categorias: Leitura pública"
     ON public.categorias FOR SELECT
+    TO anon, authenticated
     USING (true);
 
-CREATE POLICY "Permitir leitura pública de produtos"
+CREATE POLICY "Produtos: Leitura pública"
     ON public.produtos FOR SELECT
+    TO anon, authenticated
     USING (true);
 
-CREATE POLICY "Permitir leitura pública de loja_config"
+CREATE POLICY "LojaConfig: Leitura pública"
     ON public.loja_config FOR SELECT
+    TO anon, authenticated
     USING (true);
 
--- Permite gravação/edição/remoção (gerenciado pelo painel admin)
-CREATE POLICY "Permitir gravação de categorias"
-    ON public.categorias FOR ALL
+-- Permite gravação/edição/remoção APENAS para administradores autenticados
+CREATE POLICY "Categorias: Inserção por admin"
+    ON public.categorias FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Categorias: Atualização por admin"
+    ON public.categorias FOR UPDATE
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
-CREATE POLICY "Permitir gravação de produtos"
-    ON public.produtos FOR ALL
+CREATE POLICY "Categorias: Exclusão por admin"
+    ON public.categorias FOR DELETE
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Produtos: Inserção por admin"
+    ON public.produtos FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Produtos: Atualização por admin"
+    ON public.produtos FOR UPDATE
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
-CREATE POLICY "Permitir gravação de loja_config"
-    ON public.loja_config FOR ALL
+CREATE POLICY "Produtos: Exclusão por admin"
+    ON public.produtos FOR DELETE
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "LojaConfig: Inserção por admin"
+    ON public.loja_config FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "LojaConfig: Atualização por admin"
+    ON public.loja_config FOR UPDATE
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
@@ -107,8 +137,8 @@ ON CONFLICT (id) DO UPDATE SET
     subtitulo = EXCLUDED.subtitulo,
     ordem = EXCLUDED.ordem;
 
-INSERT INTO public.loja_config (id, whatsapp, whatsapp_exibicao, instagram, desconto_pix, aviso_topo, senha_admin)
-VALUES ('principal', '5561983069120', '(61) 9 8306-9120', 'estrelacriativa__', 5, '⭐ Estrela Criativa • Prof. Ataíse', 'estrela2026')
+INSERT INTO public.loja_config (id, whatsapp, whatsapp_exibicao, instagram, desconto_pix, aviso_topo)
+VALUES ('principal', '5561983069120', '(61) 9 8306-9120', 'estrelacriativa__', 5, '⭐ Estrela Criativa • Prof. Ataíse')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.produtos (id, nome, categoria, categoria_label, descricao, preco_antigo, preco, emoji, imagem, cor_fundo, tag_preview, destaque, permite_nome, dimensoes, quantidade_folhas, detalhes_extras)
@@ -141,21 +171,31 @@ DROP POLICY IF EXISTS "Permitir leitura pública de fotos" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir upload de fotos" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir atualização de fotos" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir exclusão de fotos" ON storage.objects;
+DROP POLICY IF EXISTS "Storage: Leitura pública de fotos" ON storage.objects;
+DROP POLICY IF EXISTS "Storage: Upload de fotos por admin" ON storage.objects;
+DROP POLICY IF EXISTS "Storage: Atualização de fotos por admin" ON storage.objects;
+DROP POLICY IF EXISTS "Storage: Exclusão de fotos por admin" ON storage.objects;
 
-CREATE POLICY "Permitir leitura pública de fotos"
+-- Qualquer um pode visualizar as fotos dos produtos na loja
+CREATE POLICY "Storage: Leitura pública de fotos"
     ON storage.objects FOR SELECT
+    TO anon, authenticated
     USING (bucket_id = 'produtos');
 
-CREATE POLICY "Permitir upload de fotos"
+-- Apenas administradores autenticados podem fazer upload, alterar ou apagar fotos
+CREATE POLICY "Storage: Upload de fotos por admin"
     ON storage.objects FOR INSERT
+    TO authenticated
     WITH CHECK (bucket_id = 'produtos');
 
-CREATE POLICY "Permitir atualização de fotos"
+CREATE POLICY "Storage: Atualização de fotos por admin"
     ON storage.objects FOR UPDATE
+    TO authenticated
     USING (bucket_id = 'produtos');
 
-CREATE POLICY "Permitir exclusão de fotos"
+CREATE POLICY "Storage: Exclusão de fotos por admin"
     ON storage.objects FOR DELETE
+    TO authenticated
     USING (bucket_id = 'produtos');
 
 -- ==============================================================================
@@ -183,21 +223,27 @@ DROP POLICY IF EXISTS "Permitir criação de pedidos" ON public.pedidos;
 DROP POLICY IF EXISTS "Permitir atualização de pedidos" ON public.pedidos;
 DROP POLICY IF EXISTS "Permitir exclusão de pedidos" ON public.pedidos;
 
-CREATE POLICY "Permitir leitura de pedidos"
-    ON public.pedidos FOR SELECT
-    USING (true);
-
-CREATE POLICY "Permitir criação de pedidos"
+-- Clientes da loja podem apenas ENVIAR novos pedidos ao finalizar o carrinho
+CREATE POLICY "Pedidos: Criação pública por clientes"
     ON public.pedidos FOR INSERT
+    TO anon, authenticated
     WITH CHECK (true);
 
-CREATE POLICY "Permitir atualização de pedidos"
+-- NENHUM visitante anônimo pode ler pedidos! Apenas administradores autenticados:
+CREATE POLICY "Pedidos: Leitura restrita a administradores"
+    ON public.pedidos FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Pedidos: Atualização por administradores"
     ON public.pedidos FOR UPDATE
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
-CREATE POLICY "Permitir exclusão de pedidos"
+CREATE POLICY "Pedidos: Exclusão por administradores"
     ON public.pedidos FOR DELETE
+    TO authenticated
     USING (true);
 
 NOTIFY pgrst, 'reload schema';

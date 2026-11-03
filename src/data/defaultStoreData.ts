@@ -19,7 +19,6 @@ export const CONFIG_PADRAO: StoreConfig = {
   instagram: 'estrelacriativa__',
   descontoPix: 5,
   avisoTopo: '⭐ Estrela Criativa • Prof. Ataíse',
-  senhaAdmin: 'estrela2026',
 };
 
 export const CATEGORIAS_PADRAO: Category[] = [

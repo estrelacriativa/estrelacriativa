@@ -5,6 +5,7 @@ import {
   type FormEvent,
   type ChangeEvent,
 } from 'react';
+import { supabase } from '../../lib/supabase';
 import { useStore } from '../../context/StoreContext';
 import { formatarWhatsappExibicao } from '../../utils/formatters';
 import type { StoreBackupData } from '../../types/store';
@@ -35,9 +36,11 @@ export default function AdminSettings() {
   const [avisoTopo, setAvisoTopo] = useState<string>(
     config.avisoTopo || '⭐ Estrela Criativa • Prof. Ataíse'
   );
-  const [senhaAdmin, setSenhaAdmin] = useState<string>(
-    config.senhaAdmin || 'estrela2026'
-  );
+
+  // Estados para alteração segura de senha via Supabase Auth
+  const [novaSenha, setNovaSenha] = useState<string>('');
+  const [confirmarSenha, setConfirmarSenha] = useState<string>('');
+  const [alterandoSenha, setAlterandoSenha] = useState<boolean>(false);
 
   const inputImportRef = useRef<HTMLInputElement>(null);
 
@@ -47,7 +50,6 @@ export default function AdminSettings() {
     setInstagram(config.instagram || 'estrelacriativa__');
     setDescontoPix(config.descontoPix ?? 5);
     setAvisoTopo(config.avisoTopo || '⭐ Estrela Criativa • Prof. Ataíse');
-    setSenhaAdmin(config.senhaAdmin || 'estrela2026');
   }, [config]);
 
   const handleWhatsappChange = (valor: string) => {
@@ -63,8 +65,42 @@ export default function AdminSettings() {
       instagram,
       descontoPix: Number(descontoPix),
       avisoTopo,
-      senhaAdmin,
     });
+  };
+
+  const handleAlterarSenhaAdmin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!novaSenha) {
+      mostrarNotificacao('⚠️ Digite a nova senha desejada.');
+      return;
+    }
+    if (novaSenha.length < 6) {
+      mostrarNotificacao('⚠️ A nova senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    if (novaSenha !== confirmarSenha) {
+      mostrarNotificacao('❌ As senhas digitadas não coincidem.');
+      return;
+    }
+
+    setAlterandoSenha(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: novaSenha,
+      });
+
+      if (error) {
+        mostrarNotificacao(`❌ Erro ao atualizar senha: ${error.message}`);
+      } else {
+        mostrarNotificacao('🔐 Senha de administrador atualizada com sucesso no Supabase!');
+        setNovaSenha('');
+        setConfirmarSenha('');
+      }
+    } catch {
+      mostrarNotificacao('❌ Falha ao comunicar com o Supabase Auth.');
+    } finally {
+      setAlterandoSenha(false);
+    }
   };
 
   const handleRestaurarCatalogo = () => {
@@ -162,31 +198,17 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        <div className="form-row-2">
-          <div className="form-group">
-            <label htmlFor="cfgAvisoTopo">
-              Frase de Destaque na Barra do Topo:
-            </label>
-            <input
-              type="text"
-              id="cfgAvisoTopo"
-              className="form-control"
-              value={avisoTopo}
-              onChange={(e) => setAvisoTopo(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="cfgSenhaAdmin">Senha de Acesso ao Admin:</label>
-            <input
-              type="text"
-              id="cfgSenhaAdmin"
-              className="form-control"
-              value={senhaAdmin}
-              onChange={(e) => setSenhaAdmin(e.target.value)}
-              placeholder="Padrão: estrela2026"
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="cfgAvisoTopo">
+            Frase de Destaque na Barra do Topo:
+          </label>
+          <input
+            type="text"
+            id="cfgAvisoTopo"
+            className="form-control"
+            value={avisoTopo}
+            onChange={(e) => setAvisoTopo(e.target.value)}
+          />
         </div>
 
         <div className="settings-actions-row">
@@ -246,6 +268,76 @@ export default function AdminSettings() {
           </button>
         </div>
       </form>
+
+      {/* SEÇÃO BLINDADA: ALTERAÇÃO DE SENHA SUPABASE AUTH */}
+      <div
+        style={{
+          marginTop: '32px',
+          paddingTop: '24px',
+          borderTop: '2px dashed var(--border-color)',
+        }}
+      >
+        <div className="panel-title" style={{ marginBottom: '12px' }}>
+          <span>🔐 Segurança &amp; Senha de Administrador (Supabase Auth)</span>
+        </div>
+        <p
+          style={{
+            fontSize: '0.86rem',
+            color: 'var(--text-muted)',
+            marginBottom: '16px',
+            lineHeight: '1.45',
+          }}
+        >
+          Sua senha de acesso é gerenciada pelo <strong>Supabase Auth</strong> com
+          criptografia de ponta a ponta (bcrypt). Ela nunca fica exposta em texto plano
+          e é totalmente protegida contra invasões.
+        </p>
+
+        <form onSubmit={handleAlterarSenhaAdmin}>
+          <div className="form-row-2">
+            <div className="form-group">
+              <label htmlFor="cfgNovaSenha">Nova Senha de Administrador:</label>
+              <input
+                type="password"
+                id="cfgNovaSenha"
+                className="form-control"
+                placeholder="Mínimo de 6 caracteres..."
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="cfgConfirmarSenha">Confirmar Nova Senha:</label>
+              <input
+                type="password"
+                id="cfgConfirmarSenha"
+                className="form-control"
+                placeholder="Repita a nova senha..."
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '10px' }}>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{
+                padding: '9px 20px',
+                fontSize: '0.86rem',
+                opacity: alterandoSenha ? 0.7 : 1,
+              }}
+              disabled={alterandoSenha}
+            >
+              {alterandoSenha
+                ? '⏳ Atualizando no Supabase...'
+                : '🔑 Atualizar Senha Criptografada'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

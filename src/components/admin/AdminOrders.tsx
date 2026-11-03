@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { formatarMoeda } from '../../utils/formatters';
 import {
@@ -53,6 +53,10 @@ export default function AdminOrders({
   const [imprimindoItemUid, setImprimindoItemUid] = useState<string | null>(
     null
   );
+
+  useEffect(() => {
+    recarregarPedidos().catch(() => {});
+  }, [recarregarPedidos]);
 
   const totalComArte = useMemo(
     () =>
